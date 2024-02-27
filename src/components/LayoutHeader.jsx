@@ -29,7 +29,7 @@ const LayoutHeader = memo(() => {
   };
   
   return (
-    <div className='flex items-center min-w-[1280px] px-4'>
+    <div className='flex items-center w-[1280px] min-w-[600px] px-4'>
       <div className="flex justify-start w-[192px]">
         <div onClick={() => changeRoute('/home')} className='flex items-center gap-3 cursor-pointer'>
           <img src="/assets/resume-logo.png" alt="" className="w-[40px] h-[40px]" />
@@ -40,7 +40,7 @@ const LayoutHeader = memo(() => {
         <Menu onClick={(e) => changeRoute(e.key)} selectedKeys={[curMenu]} mode="horizontal" items={items} />
       </div>
       <div>
-        <Button onClick={() => changeRoute('/login')} shape="round" size="large" className='text-white bg-[#446ef6] hover:!text-white hover:!bg-[#446ef6]' >登录</Button>
+        <Button onClick={() => changeRoute('/login')} shape="round" size="large" className='text-white bg-[#446ef6] hover:!text-white hover:!bg-[#446ef6]'>登录</Button>
       </div>
     </div>
   )
