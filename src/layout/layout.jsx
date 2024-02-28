@@ -11,7 +11,7 @@ const layout = memo(({ children }) => {
       <Header className='fixed top-0 left-0 right-0 z-10 flex justify-center h-[var(--top-nav-bar-height)] px-0 bg-white'>
         <LayoutHeader />
       </Header>
-      <Content className='h-[100vh]'>
+      <Content className='h-[100vh] bg-layout-gradient'>
         {children}
       </Content>
     </Layout>

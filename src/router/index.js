@@ -5,6 +5,7 @@ const Home = React.lazy(() => import('@/views/Home.jsx'));
 const Template = React.lazy(() => import('@/views/Template.jsx'));
 const Resume = React.lazy(() => import('@/views/Resume.jsx'));
 const Login = React.lazy(() => import('@/views/Login.jsx'));
+const Register = React.lazy(() => import('@/views/Register.jsx'));
 
 const routes = [
   {
@@ -26,6 +27,10 @@ const routes = [
   {
     path: '/login',
     element: <Login />
+  },
+  {
+    path: '/register',
+    element: <Register />
   }
 ];
 

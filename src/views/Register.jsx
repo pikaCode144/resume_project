@@ -20,30 +20,39 @@ const formRules = {
   ]
 }
 
-const Login = memo(() => {
+const confirmHandle = ({ getFieldValue }) => ({
+  validator(_, value) {
+    if (!value || getFieldValue('password') === value) {
+      return Promise.resolve();
+    }
+    return Promise.reject(new Error('两次输入的密码不一致!'));
+  },
+})
+
+const Register = memo(() => {
   const navigete = useNavigate();
   
   const onFinish = (values) => {
     console.log('Success:', values);
   };
 
-  const toRegister = () => {
-    navigete('/register');
+  const toLogin = () => {
+    navigete('/login');
   };
 
   return (
     <div className='w-full h-full bg-no-repeat bg-cover bg-center' style={{ backgroundImage: `url(${LoginBg})`}}>
       <div className='relative w-full h-full pt-[var(--top-nav-bar-height)]'>
         <div className='absolute top-1/2 right-[240px] -translate-y-1/2 flex flex-col gap-6'>
-          <div className='text-[33px] text-[#446ef6] font-semibold text-center'>登录即可创建简历</div>
+          <div className='text-[33px] text-[#446ef6] font-semibold text-center'>免费注册账号</div>
           <div className='w-[386px] p-8 bg-white rounded-2xl'>
             <div className="flex justify-center pb-6">
               <div className='flex items-center gap-3 cursor-pointer'>
                 <img src="/assets/resume-logo.png" alt="" className="w-[56px] h-[56px]" />
-                <h1 className='text-lg'>登录账号</h1>
+                <h1 className='text-lg'>注册账号</h1>
               </div>
             </div>
-            <Form name="loginForm"
+            <Form name="registerForm"
               initialValues={{ remember: true }} onFinish={onFinish}
               autoComplete="off" className='max-w-[300px] m-auto'>
               <Form.Item name="email" rules={formRules.email}>
@@ -54,12 +63,16 @@ const Login = memo(() => {
                 <Input.Password size='large' placeholder="请输入您的密码..." />
               </Form.Item>
 
+              <Form.Item name="confirm" dependencies={['password']} rules={[ ...formRules.password, confirmHandle ]}>
+                <Input.Password size='large' placeholder="请再次输入您的密码..." />
+              </Form.Item>
+
               <Form.Item wrapperCol={{ span: 24 }}>
-                <Button type="primary" size='large' onClick={toRegister} className='w-full mb-2 text-white bg-[#446ef6] hover:!text-white hover:!bg-[#446ef6]'>
+                <Button htmlType="submit" type="primary" size='large' className='w-full mb-2 text-white bg-[#446ef6] hover:!text-white hover:!bg-[#446ef6]'>
                   注册
                 </Button>
-                <Button type="primary" htmlType="submit" size='large' className='w-full text-white bg-[#446ef6] hover:!text-white hover:!bg-[#446ef6]'>
-                  登录
+                <Button size='large' className='w-full' onClick={toLogin}>
+                  返回
                 </Button>
               </Form.Item>
             </Form>
@@ -70,4 +83,4 @@ const Login = memo(() => {
   )
 });
 
-export default Login;
+export default Register;
