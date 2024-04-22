@@ -1,13 +1,14 @@
-import { memo } from 'react';
+import { memo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button } from 'antd';
+import { Form, Input, Button, message } from 'antd';
+import { getCodeApi, userRegister } from '../services';
 
 import LoginBg from '../assets/login-bg.jpg';
 
 const formRules = {
   email: [
     { required: true, message: '请输入您的邮箱!' },
-    { type: 'email', message: '请输入正确的邮箱格式!' }
+    { type: 'email', message: '请输入正确的邮箱格式!' },
   ],
   password: [
     { required: true, message: '请输入您的密码!' },
@@ -16,8 +17,12 @@ const formRules = {
     // 确保密码中包含数字和字母
     { pattern: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,16}$/, message: '密码必须包含数字和字母，且不能包含汉字!' },
     // 确保密码不包含汉字
-    { pattern: /^[^\u4e00-\u9fa5]+$/, message: '密码不能包含汉字!' }
-  ]
+    { pattern: /^[^\u4e00-\u9fa5]+$/, message: '密码不能包含汉字!' },
+  ],
+  code: [
+    { required: true, message: '验证码必须填写' },
+    { pattern: /^[\d]{6}$/, message: '验证码只能是6位数字' },
+  ],
 }
 
 const confirmHandle = ({ getFieldValue }) => ({
@@ -29,11 +34,94 @@ const confirmHandle = ({ getFieldValue }) => ({
   },
 })
 
+const initForm = {
+  email: '',
+  password: '',
+  confirm: '',
+  code: '',
+};
+
 const Register = memo(() => {
   const navigete = useNavigate();
-  
-  const onFinish = (values) => {
-    console.log('Success:', values);
+  const formRef = useRef(null);
+  const [counting, setCounting] = useState(false);
+  const [count, setCount] = useState(60);
+  const codeRef = useRef(0);
+
+  useEffect(() => {
+    let interval = null;
+    if (counting && count !== 0) {
+      interval = setInterval(() => {
+        setCount((prevCount) => prevCount - 1);
+      }, 1000);
+    } else if (count === 0) {
+      codeRef.current = 0;
+      setCounting(false);
+      setCount(60);
+    }
+    return () => clearInterval(interval);
+  }, [counting, count]);
+
+  // 从后端获取验证码
+  const getCode = async () => {
+    if (!formRef.current) {
+      return;
+    }
+
+    setCounting(true);
+    const values = formRef.current.getFieldsValue();
+    const { email } = values;
+
+    if (!email) {
+      message.warning('发送验证码前，请填写邮箱~');
+      return;
+    }
+
+    try {
+      const res = await getCodeApi(email);
+      if (res.code !== 200) {
+        message.error(res.message);
+        return;
+      }
+      message.success(res.message);
+      codeRef.current = res.data.code;
+    } catch {
+      message.error('获取验证码失败~');
+    }
+  };
+
+  // 进行提交逻辑
+  const onSubmit = async () => {
+    if (!formRef.current) {
+      return;
+    }
+
+    try {
+      await formRef.current.validateFields();
+    } catch {
+      message.warning('请正确填写数据~');
+      return;
+    }
+
+    const values = formRef.current.getFieldsValue();
+    const { code } = values;
+
+    if (code !== codeRef.current) {
+      message.warning("请输入正确的验证码~");
+      return;
+    }
+
+    try {
+      const res = await userRegister(values);
+      if (res.code !== 201) {
+        message.error(res.message);
+        return;
+      }
+      message.success(res.message);
+      navigete('/login');
+    } catch {
+      message.error('注册失败，请稍后重试');
+    }
   };
 
   const toLogin = () => {
@@ -52,9 +140,7 @@ const Register = memo(() => {
                 <h1 className='text-lg'>注册账号</h1>
               </div>
             </div>
-            <Form name="registerForm"
-              initialValues={{ remember: true }} onFinish={onFinish}
-              autoComplete="off" className='max-w-[300px] m-auto'>
+            <Form ref={formRef} initialValues={initForm} autoComplete="off" className='max-w-[300px] m-auto'>
               <Form.Item name="email" rules={formRules.email}>
                 <Input size='large' placeholder="请输入您的邮箱..." />
               </Form.Item>
@@ -67,8 +153,20 @@ const Register = memo(() => {
                 <Input.Password size='large' placeholder="请再次输入您的密码..." />
               </Form.Item>
 
+              <div className="flex gap-2">
+                <Form.Item name="code" rules={formRules.code} className="flex-grow">
+                  <Input />
+                </Form.Item>
+                <Button
+                  disabled={counting}
+                  onClick={getCode}
+                >
+                  {counting ? `${count} 秒后重新获取` : '获取验证码'}
+                </Button>
+              </div>
+
               <Form.Item wrapperCol={{ span: 24 }}>
-                <Button htmlType="submit" type="primary" size='large' className='w-full mb-2 text-white bg-[#446ef6] hover:!text-white hover:!bg-[#446ef6]'>
+                <Button onClick={onSubmit} type="primary" size='large' className='w-full mb-2 text-white bg-[#446ef6] hover:!text-white hover:!bg-[#446ef6]'>
                   注册
                 </Button>
                 <Button size='large' className='w-full' onClick={toLogin}>

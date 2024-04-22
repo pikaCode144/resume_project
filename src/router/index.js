@@ -34,7 +34,7 @@ const routes = [
     element: <Register />
   },
   {
-    path: '/builder',
+    path: '/builder/:id',
     element: <Builder />
   }
 ];
