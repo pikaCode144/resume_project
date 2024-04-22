@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { observer } from 'mobx-react';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import domtoimage from 'dom-to-image';
 import { Button, Input, message, Switch } from 'antd';
 import { LeftOutlined, EditOutlined, CheckOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import {
@@ -17,19 +17,10 @@ import ResumeView from '@/components/ResumeView';
 import ResumeForm from '@/components/ResumeBuild/ResumeForm';
 import IconAndLabel from '@/components/basic/IconAndLabel';
 
-// 生成画布的通用函数
-const captureCanvas = (element, callback) => {
-  html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    dpi: 300,
-  }).then(callback);
-};
-
 // 保存PNG的函数
 const saveToPNG = (element, filename, resumeId) => {
-  captureCanvas(element, (canvas) => {
-    canvas.toBlob(async (blob) => {
+  domtoimage.toBlob(element)
+    .then(async (blob) => {
       // 创建一个File对象
       const file = new File([blob], `${filename}.png`, { type: 'image/png' });
       
@@ -47,22 +38,32 @@ const saveToPNG = (element, filename, resumeId) => {
       } catch (err) {
         message.error(err.message);
       }
-    }, 'image/png');
-  });
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
 };
 
 // 导出PDF的函数
 const exportToPDF = (element, filename) => {
-  captureCanvas(element, (canvas) => {
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'px',
-      format: [793, 1122],
+  domtoimage.toPng(element)
+    .then((dataUrl) => {
+      const pdf = new jsPDF({
+        orientation: 'p', // 纵向
+        unit: 'px', // 单位，像素
+        format: 'a4' // 使用A4纸
+      });
+
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${filename}.pdf`);
+    })
+    .catch((error) => {
+      console.error('Error:', error);
     });
-    pdf.addImage(imgData, 'PNG', 0, 0, 793, 1122);
-    pdf.save(`${filename}.pdf`);
-  });
 };
 
 const Builder = () => {
